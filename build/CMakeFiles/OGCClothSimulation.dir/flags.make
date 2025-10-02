@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/ubuntu/OGC-cloth-test2/include -I/home/ubuntu/OGC-cloth-test2/external/glad/include -I/usr/include/bullet
+CXX_INCLUDES = -I/home/ubuntu/OGC-cloth-test2/include -I/home/ubuntu/OGC-cloth-test2/external/glad/include -I/usr/lib -I/usr/include/bullet
 
 CXX_FLAGS =  -Wall -Wextra -O2 -O3 -DNDEBUG -std=c++17
 

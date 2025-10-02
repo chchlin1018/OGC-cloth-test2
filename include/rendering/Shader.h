@@ -40,6 +40,10 @@ public:
     void setVector3(const std::string& name, const glm::vec3& vector);
     void setFloat(const std::string& name, float value);
     void setInt(const std::string& name, int value);
+    
+    // 別名方法，與常見的OpenGL教程保持一致
+    void setMat4(const std::string& name, const glm::mat4& matrix) { setMatrix4(name, matrix); }
+    void setVec3(const std::string& name, const glm::vec3& vector) { setVector3(name, vector); }
 
     /**
      * @brief 檢查著色器是否有效

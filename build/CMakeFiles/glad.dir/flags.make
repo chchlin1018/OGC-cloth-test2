@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I/home/ubuntu/OGC-cloth-test2/include -I/home/ubuntu/OGC-cloth-test2/external/glad/include -I/usr/include/bullet
+C_INCLUDES = -I/home/ubuntu/OGC-cloth-test2/include -I/home/ubuntu/OGC-cloth-test2/external/glad/include -I/usr/lib -I/usr/include/bullet
 
 C_FLAGS = -O3 -DNDEBUG
 

@@ -180,7 +180,8 @@ CMakeFiles/OGCClothSimulation.dir/src/main.cpp.o: \
  /usr/include/c++/11/bits/vector.tcc \
  /home/ubuntu/OGC-cloth-test2/include/rendering/OpenGLRenderer.h \
  /home/ubuntu/OGC-cloth-test2/external/glad/include/glad/glad.h \
- /usr/include/GLFW/glfw3.h /usr/include/glm/glm.hpp \
+ /usr/include/GLFW/glfw3.h /usr/include/GL/gl.h /usr/include/GL/glext.h \
+ /usr/include/KHR/khrplatform.h /usr/include/glm/glm.hpp \
  /usr/include/glm/detail/_fixes.hpp /usr/include/c++/11/cmath \
  /usr/include/math.h /usr/include/x86_64-linux-gnu/bits/math-vector.h \
  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \

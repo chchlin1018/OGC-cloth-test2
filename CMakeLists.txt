@@ -23,6 +23,40 @@ find_package(PkgConfig REQUIRED)
 # 尋找 GLFW
 pkg_check_modules(GLFW REQUIRED glfw3)
 
+# 尋找 GLM
+find_package(glm QUIET)
+if(NOT glm_FOUND)
+    # 嘗試通過 pkg-config 尋找 GLM
+    pkg_check_modules(GLM glm)
+    if(NOT GLM_FOUND)
+        # 手動設定 GLM 路徑
+        set(GLM_INCLUDE_DIRS "")
+        
+        # 常見的 GLM 安裝路徑
+        set(GLM_SEARCH_PATHS
+            "/opt/homebrew/include"
+            "/usr/local/include"
+            "/usr/include"
+            "/opt/local/include"
+        )
+        
+        foreach(SEARCH_PATH ${GLM_SEARCH_PATHS})
+            if(EXISTS "${SEARCH_PATH}/glm/glm.hpp")
+                set(GLM_INCLUDE_DIRS ${SEARCH_PATH})
+                message(STATUS "Found GLM at: ${SEARCH_PATH}")
+                break()
+            endif()
+        endforeach()
+        
+        if(NOT GLM_INCLUDE_DIRS)
+            message(FATAL_ERROR "GLM not found. Please install GLM: brew install glm")
+        endif()
+    endif()
+else()
+    get_target_property(GLM_INCLUDE_DIRS glm::glm INTERFACE_INCLUDE_DIRECTORIES)
+    message(STATUS "Found GLM via find_package")
+endif()
+
 # 嘗試尋找 Bullet Physics
 pkg_check_modules(BULLET bullet)
 
@@ -39,6 +73,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include
     ${GLFW_INCLUDE_DIRS}
+    ${GLM_INCLUDE_DIRS}
 )
 
 if(BULLET_FOUND)
@@ -117,6 +152,7 @@ message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "OpenGL Found: ${OPENGL_FOUND}")
 message(STATUS "GLFW Found: ${GLFW_FOUND}")
+message(STATUS "GLM Include Dirs: ${GLM_INCLUDE_DIRS}")
 message(STATUS "Bullet Physics Found: ${BULLET_FOUND}")
 if(BULLET_FOUND)
     message(STATUS "Bullet Version: ${BULLET_VERSION}")

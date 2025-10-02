@@ -1,17 +1,11 @@
 #ifndef __glad_h_
 #define __glad_h_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
-
-#ifdef __gl_h_
-#error OpenGL header already included, remove this include, glad already provides it
-#endif
-
-#define __gl_h_
-
-#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
-#define APIENTRY __stdcall
-#endif
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -19,28 +13,10 @@
 #ifndef APIENTRYP
 #define APIENTRYP APIENTRY *
 #endif
-
 #ifndef GLAPI
 #define GLAPI extern
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct gladGLversionStruct {
-    int major;
-    int minor;
-};
-
-typedef void* (* GLADloadproc)(const char *name);
-
-GLAPI struct gladGLversionStruct GLVersion;
-
-GLAPI int gladLoadGL(void);
-GLAPI int gladLoadGLLoader(GLADloadproc);
-
-// OpenGL 基本類型定義
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
 typedef unsigned int GLbitfield;
@@ -70,6 +46,10 @@ typedef ptrdiff_t GLsizeiptr;
 #define GL_DEPTH_BUFFER_BIT               0x00000100
 #define GL_DEPTH_TEST                     0x0B71
 #define GL_BLEND                          0x0BE2
+#define GL_UNSIGNED_INT                   0x1405
+#define GL_LINE_SMOOTH                    0x0B20
+#define GL_LINE_SMOOTH_HINT               0x0C52
+#define GL_NICEST                         0x1102
 #define GL_SRC_ALPHA                      0x0302
 #define GL_ONE_MINUS_SRC_ALPHA            0x0303
 #define GL_VERTEX_SHADER                  0x8B31
@@ -82,7 +62,7 @@ typedef ptrdiff_t GLsizeiptr;
 #define GL_DYNAMIC_DRAW                   0x88E8
 #define GL_FLOAT                          0x1406
 
-// OpenGL 函數指標
+// OpenGL 函數類型定義
 typedef void (APIENTRYP PFNGLCLEARPROC) (GLbitfield mask);
 typedef void (APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 typedef void (APIENTRYP PFNGLENABLEPROC) (GLenum cap);
@@ -108,6 +88,19 @@ typedef GLint (APIENTRYP PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLc
 typedef void (APIENTRYP PFNGLUNIFORMMATRIX4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void (APIENTRYP PFNGLUNIFORM3FVPROC) (GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRYP PFNGLUNIFORM1FPROC) (GLint location, GLfloat v0);
+typedef void (APIENTRYP PFNGLUNIFORM1IPROC) (GLint location, GLint v0);
+typedef void (APIENTRYP PFNGLBUFFERSUBDATAPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
+typedef void (APIENTRYP PFNGLVIEWPORTPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
+typedef void (APIENTRYP PFNGLHINTPROC) (GLenum target, GLenum mode);
+typedef void (APIENTRYP PFNGLLINEWIDTHPROC) (GLfloat width);
+typedef void (APIENTRYP PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint *buffers);
+typedef void (APIENTRYP PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint *arrays);
+typedef void (APIENTRYP PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint *params);
+typedef void (APIENTRYP PFNGLDELETESHADERPROC) (GLuint shader);
+typedef void (APIENTRYP PFNGLGETPROGRAMIVPROC) (GLuint program, GLenum pname, GLint *params);
+typedef void (APIENTRYP PFNGLDELETEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRYP PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRYP PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 
 // OpenGL 函數宣告
 GLAPI PFNGLCLEARPROC glad_glClear;
@@ -135,6 +128,19 @@ GLAPI PFNGLGETUNIFORMLOCATIONPROC glad_glGetUniformLocation;
 GLAPI PFNGLUNIFORMMATRIX4FVPROC glad_glUniformMatrix4fv;
 GLAPI PFNGLUNIFORM3FVPROC glad_glUniform3fv;
 GLAPI PFNGLUNIFORM1FPROC glad_glUniform1f;
+GLAPI PFNGLUNIFORM1IPROC glad_glUniform1i;
+GLAPI PFNGLBUFFERSUBDATAPROC glad_glBufferSubData;
+GLAPI PFNGLVIEWPORTPROC glad_glViewport;
+GLAPI PFNGLHINTPROC glad_glHint;
+GLAPI PFNGLLINEWIDTHPROC glad_glLineWidth;
+GLAPI PFNGLDELETEBUFFERSPROC glad_glDeleteBuffers;
+GLAPI PFNGLDELETEVERTEXARRAYSPROC glad_glDeleteVertexArrays;
+GLAPI PFNGLGETSHADERIVPROC glad_glGetShaderiv;
+GLAPI PFNGLDELETESHADERPROC glad_glDeleteShader;
+GLAPI PFNGLGETPROGRAMIVPROC glad_glGetProgramiv;
+GLAPI PFNGLDELETEPROGRAMPROC glad_glDeleteProgram;
+GLAPI PFNGLGETSHADERINFOLOGPROC glad_glGetShaderInfoLog;
+GLAPI PFNGLGETPROGRAMINFOLOGPROC glad_glGetProgramInfoLog;
 
 // 函數別名
 #define glClear glad_glClear
@@ -162,6 +168,22 @@ GLAPI PFNGLUNIFORM1FPROC glad_glUniform1f;
 #define glUniformMatrix4fv glad_glUniformMatrix4fv
 #define glUniform3fv glad_glUniform3fv
 #define glUniform1f glad_glUniform1f
+#define glUniform1i glad_glUniform1i
+#define glBufferSubData glad_glBufferSubData
+#define glViewport glad_glViewport
+#define glHint glad_glHint
+#define glLineWidth glad_glLineWidth
+#define glDeleteBuffers glad_glDeleteBuffers
+#define glDeleteVertexArrays glad_glDeleteVertexArrays
+#define glGetShaderiv glad_glGetShaderiv
+#define glDeleteShader glad_glDeleteShader
+#define glGetProgramiv glad_glGetProgramiv
+#define glDeleteProgram glad_glDeleteProgram
+#define glGetShaderInfoLog glad_glGetShaderInfoLog
+#define glGetProgramInfoLog glad_glGetProgramInfoLog
+
+// GLAD 初始化函數
+int gladLoadGL(void);
 
 #ifdef __cplusplus
 }

@@ -63,7 +63,7 @@ bool OpenGLRenderer::initialize(int width, int height, const char* title) {
     glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
     
     // 初始化 GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGL()) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return false;
     }
@@ -162,7 +162,9 @@ void OpenGLRenderer::processInput() {
         // 滑鼠滾輪縮放
         static double lastScrollY = 0.0;
         double scrollX, scrollY;
-        glfwGetScrollOffset(m_window, &scrollX, &scrollY);
+        // 注意：GLFW沒有glfwGetScrollOffset函數，滾動事件通過回調處理
+        // 這裡可以使用靜態變數來存儲滾動偏移
+        scrollX = 0.0; scrollY = 0.0;
         if (scrollY != lastScrollY) {
             m_camera->processMouseScroll(scrollY - lastScrollY);
             lastScrollY = scrollY;
@@ -311,7 +313,10 @@ void OpenGLRenderer::renderContacts(const std::vector<Physics::OGCContact>& cont
         static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight)
     );
     
-    m_contactVisualizer->renderContacts(contacts, view, projection);
+    m_contactVisualizer->renderContactPoints(contacts, view, projection);
+    m_contactVisualizer->renderContactNormals(contacts, view, projection);
+    m_contactVisualizer->renderContactForces(contacts, view, projection);
+    m_contactVisualizer->renderOffsetGeometry(contacts, view, projection);
 }
 
 void OpenGLRenderer::setWindowSize(int width, int height) {

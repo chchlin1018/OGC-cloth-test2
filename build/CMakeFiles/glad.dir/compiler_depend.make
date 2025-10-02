@@ -66,8 +66,14 @@ CMakeFiles/glad.dir/external/glad/src/glad.c.o: ../external/glad/src/glad.c \
   /usr/include/strings.h \
   /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
   /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
-  ../external/glad/include/glad/glad.h
+  ../external/glad/include/glad/glad.h \
+  /usr/include/dlfcn.h \
+  /usr/include/x86_64-linux-gnu/bits/dlfcn.h
 
+
+/usr/include/x86_64-linux-gnu/bits/dlfcn.h:
+
+/usr/include/dlfcn.h:
 
 ../external/glad/include/glad/glad.h:
 

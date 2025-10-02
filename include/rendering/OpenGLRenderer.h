@@ -7,17 +7,18 @@
 #include <vector>
 #include <memory>
 
+// 前向聲明
+namespace Physics {
+    class Particle;
+    struct OGCContact;
+}
+
 namespace Rendering {
 
 // 前向聲明
 class Shader;
 class Camera;
 class ContactVisualizer;
-
-namespace Physics {
-    class Particle;
-    struct OGCContact;
-}
 
 /**
  * @brief OpenGL 渲染器
@@ -69,14 +70,14 @@ public:
      * @brief 渲染布料粒子
      * @param particles 粒子列表
      */
-    void renderClothParticles(const std::vector<Physics::Particle*>& particles);
+    void renderClothParticles(const std::vector<::Physics::Particle*>& particles);
 
     /**
      * @brief 渲染布料約束 (彈簧)
      * @param particles 粒子列表
      * @param constraints 約束索引對列表
      */
-    void renderClothConstraints(const std::vector<Physics::Particle*>& particles,
+    void renderClothConstraints(const std::vector<::Physics::Particle*>& particles,
                                const std::vector<std::pair<int, int>>& constraints);
 
     /**
@@ -102,7 +103,7 @@ public:
      * @brief 渲染接觸點和接觸力
      * @param contacts 接觸列表
      */
-    void renderContacts(const std::vector<Physics::OGCContact>& contacts);
+    void renderContacts(const std::vector<::Physics::OGCContact>& contacts);
 
     /**
      * @brief 設定相機

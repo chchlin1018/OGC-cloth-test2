@@ -1,0 +1,4 @@
+/home/ubuntu/OGC-cloth-test2/build/CMakeFiles/glad.dir
+/home/ubuntu/OGC-cloth-test2/build/CMakeFiles/OGCClothSimulation.dir
+/home/ubuntu/OGC-cloth-test2/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/OGC-cloth-test2/build/CMakeFiles/rebuild_cache.dir

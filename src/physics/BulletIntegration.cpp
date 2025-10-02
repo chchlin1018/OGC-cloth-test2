@@ -1,6 +1,251 @@
 #include "physics/BulletIntegration.h"
 #include "physics/Particle.h"
 #include <iostream>
+#include <cmath>
+#include <algorithm>
+
+#ifdef USE_SIMPLIFIED_COLLISION
+// 簡化的碰撞檢測實現，不依賴 Bullet Physics
+namespace Physics {
+
+// 簡化的碰撞體結構
+struct SimpleCollisionObject {
+    enum Type { CYLINDER, BOX, SPHERE };
+    Type type;
+    glm::vec3 center;
+    glm::vec3 size; // 對於圓柱體：x=radius, y=height, z=radius
+    Particle* particle; // 如果是粒子，則指向粒子對象
+    
+    SimpleCollisionObject(Type t, const glm::vec3& c, const glm::vec3& s, Particle* p = nullptr)
+        : type(t), center(c), size(s), particle(p) {}
+};
+
+class SimpleBulletIntegration {
+private:
+    std::vector<std::unique_ptr<SimpleCollisionObject>> m_collisionObjects;
+    
+public:
+    SimpleBulletIntegration() {
+        std::cout << "Using simplified collision detection (Bullet Physics not available)" << std::endl;
+    }
+    
+    ~SimpleBulletIntegration() {
+        m_collisionObjects.clear();
+    }
+    
+    void* addCylinder(const glm::vec3& center, float radius, float height) {
+        auto obj = std::make_unique<SimpleCollisionObject>(
+            SimpleCollisionObject::CYLINDER, center, glm::vec3(radius, height, radius)
+        );
+        void* ptr = obj.get();
+        m_collisionObjects.push_back(std::move(obj));
+        
+        std::cout << "Added simplified cylinder: center(" << center.x << ", " << center.y << ", " << center.z 
+                  << "), radius=" << radius << ", height=" << height << std::endl;
+        return ptr;
+    }
+    
+    void* addFloor(const glm::vec3& center, const glm::vec3& size) {
+        auto obj = std::make_unique<SimpleCollisionObject>(
+            SimpleCollisionObject::BOX, center, size
+        );
+        void* ptr = obj.get();
+        m_collisionObjects.push_back(std::move(obj));
+        
+        std::cout << "Added simplified floor: center(" << center.x << ", " << center.y << ", " << center.z 
+                  << "), size(" << size.x << ", " << size.y << ", " << size.z << ")" << std::endl;
+        return ptr;
+    }
+    
+    void* addParticle(Particle* particle, float radius) {
+        if (!particle) return nullptr;
+        
+        auto obj = std::make_unique<SimpleCollisionObject>(
+            SimpleCollisionObject::SPHERE, particle->getPosition(), glm::vec3(radius), particle
+        );
+        void* ptr = obj.get();
+        m_collisionObjects.push_back(std::move(obj));
+        return ptr;
+    }
+    
+    void updateParticlePosition(Particle* particle, void* collisionObject) {
+        if (!particle || !collisionObject) return;
+        
+        SimpleCollisionObject* obj = static_cast<SimpleCollisionObject*>(collisionObject);
+        if (obj->particle == particle) {
+            obj->center = particle->getPosition();
+        }
+    }
+    
+    std::vector<OGCContact> performCollisionDetection() {
+        std::vector<OGCContact> contacts;
+        
+        // 檢查每個粒子與靜態物體的碰撞
+        for (const auto& particleObj : m_collisionObjects) {
+            if (particleObj->type != SimpleCollisionObject::SPHERE || !particleObj->particle) continue;
+            
+            for (const auto& staticObj : m_collisionObjects) {
+                if (staticObj->particle != nullptr) continue; // 跳過其他粒子
+                
+                OGCContact contact;
+                if (checkCollision(*particleObj, *staticObj, contact)) {
+                    contacts.push_back(contact);
+                }
+            }
+        }
+        
+        return contacts;
+    }
+    
+private:
+    bool checkCollision(const SimpleCollisionObject& sphere, const SimpleCollisionObject& other, OGCContact& contact) {
+        if (other.type == SimpleCollisionObject::CYLINDER) {
+            return checkSphereCylinderCollision(sphere, other, contact);
+        } else if (other.type == SimpleCollisionObject::BOX) {
+            return checkSphereBoxCollision(sphere, other, contact);
+        }
+        return false;
+    }
+    
+    bool checkSphereCylinderCollision(const SimpleCollisionObject& sphere, const SimpleCollisionObject& cylinder, OGCContact& contact) {
+        glm::vec3 spherePos = sphere.center;
+        float sphereRadius = sphere.size.x;
+        
+        glm::vec3 cylinderPos = cylinder.center;
+        float cylinderRadius = cylinder.size.x;
+        float cylinderHeight = cylinder.size.y;
+        
+        // 檢查垂直範圍
+        float yMin = cylinderPos.y - cylinderHeight * 0.5f;
+        float yMax = cylinderPos.y + cylinderHeight * 0.5f;
+        
+        if (spherePos.y < yMin - sphereRadius || spherePos.y > yMax + sphereRadius) {
+            return false; // 不在圓柱體的高度範圍內
+        }
+        
+        // 計算到圓柱體軸的距離
+        glm::vec2 sphereXZ(spherePos.x, spherePos.z);
+        glm::vec2 cylinderXZ(cylinderPos.x, cylinderPos.z);
+        float distanceToAxis = glm::length(sphereXZ - cylinderXZ);
+        
+        // 檢查是否碰撞
+        float totalRadius = sphereRadius + cylinderRadius;
+        if (distanceToAxis < totalRadius) {
+            // 計算接觸點和法線
+            glm::vec2 direction = glm::normalize(sphereXZ - cylinderXZ);
+            glm::vec3 contactNormal = glm::vec3(direction.x, 0.0f, direction.y);
+            
+            // 限制 Y 座標在圓柱體範圍內
+            float contactY = std::max(yMin, std::min(yMax, spherePos.y));
+            
+            contact.particleA = sphere.particle;
+            contact.particleB = nullptr;
+            contact.contactPoint = cylinderPos + glm::vec3(direction.x * cylinderRadius, contactY - cylinderPos.y, direction.y * cylinderRadius);
+            contact.contactNormal = contactNormal;
+            contact.penetrationDepth = totalRadius - distanceToAxis;
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    bool checkSphereBoxCollision(const SimpleCollisionObject& sphere, const SimpleCollisionObject& box, OGCContact& contact) {
+        glm::vec3 spherePos = sphere.center;
+        float sphereRadius = sphere.size.x;
+        
+        glm::vec3 boxPos = box.center;
+        glm::vec3 boxSize = box.size;
+        
+        // 計算最近點
+        glm::vec3 closestPoint = glm::clamp(spherePos, boxPos - boxSize * 0.5f, boxPos + boxSize * 0.5f);
+        
+        // 檢查距離
+        glm::vec3 diff = spherePos - closestPoint;
+        float distance = glm::length(diff);
+        
+        if (distance < sphereRadius) {
+            contact.particleA = sphere.particle;
+            contact.particleB = nullptr;
+            contact.contactPoint = closestPoint;
+            contact.contactNormal = (distance > 0.001f) ? glm::normalize(diff) : glm::vec3(0.0f, 1.0f, 0.0f);
+            contact.penetrationDepth = sphereRadius - distance;
+            
+            return true;
+        }
+        
+        return false;
+    }
+};
+
+// 全局簡化碰撞檢測實例
+static SimpleBulletIntegration g_simpleBullet;
+
+BulletIntegration::BulletIntegration() {
+    // 使用簡化實現
+}
+
+BulletIntegration::~BulletIntegration() {
+    // 簡化實現的清理
+}
+
+void BulletIntegration::initialize() {
+    // 簡化實現不需要初始化
+}
+
+void BulletIntegration::cleanup() {
+    // 簡化實現不需要清理
+}
+
+btCollisionObject* BulletIntegration::addCylinder(const glm::vec3& center, float radius, float height) {
+    return static_cast<btCollisionObject*>(g_simpleBullet.addCylinder(center, radius, height));
+}
+
+btCollisionObject* BulletIntegration::addFloor(const glm::vec3& center, const glm::vec3& size) {
+    return static_cast<btCollisionObject*>(g_simpleBullet.addFloor(center, size));
+}
+
+btCollisionObject* BulletIntegration::addParticle(Particle* particle, float radius) {
+    return static_cast<btCollisionObject*>(g_simpleBullet.addParticle(particle, radius));
+}
+
+void BulletIntegration::updateParticlePosition(Particle* particle, btCollisionObject* collisionObject) {
+    g_simpleBullet.updateParticlePosition(particle, static_cast<void*>(collisionObject));
+}
+
+std::vector<OGCContact> BulletIntegration::performCollisionDetection() {
+    return g_simpleBullet.performCollisionDetection();
+}
+
+void BulletIntegration::removeCollisionObject(btCollisionObject* collisionObject) {
+    // 簡化實現暫不支持移除
+}
+
+std::vector<OGCContact> BulletIntegration::convertBulletContacts(btPersistentManifold* manifold) {
+    // 簡化實現不需要轉換
+    return std::vector<OGCContact>();
+}
+
+Particle* BulletIntegration::getParticleFromCollisionObject(btCollisionObject* collisionObject) {
+    // 簡化實現
+    return nullptr;
+}
+
+glm::vec3 BulletIntegration::bulletToGlm(const btVector3& btVec) {
+    // 簡化實現
+    return glm::vec3(0.0f);
+}
+
+btVector3 BulletIntegration::glmToBullet(const glm::vec3& glmVec) {
+    // 簡化實現
+    return btVector3(0, 0, 0);
+}
+
+} // namespace Physics
+
+#else
+// 原始的 Bullet Physics 實現
+#include <btBulletDynamicsCommon.h>
 
 namespace Physics {
 
@@ -233,3 +478,5 @@ btVector3 BulletIntegration::glmToBullet(const glm::vec3& glmVec) {
 }
 
 } // namespace Physics
+
+#endif // USE_SIMPLIFIED_COLLISION

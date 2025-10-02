@@ -1,10 +1,23 @@
 #pragma once
 
-#include <btBulletCollisionCommon.h>
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
 #include "physics/OGCContactModel.h"
+
+#ifndef USE_SIMPLIFIED_COLLISION
+#include <btBulletCollisionCommon.h>
+#else
+// 簡化實現的前向聲明
+class btCollisionObject;
+class btPersistentManifold;
+class btVector3;
+class btCollisionWorld;
+class btDefaultCollisionConfiguration;
+class btCollisionDispatcher;
+class btDbvtBroadphase;
+class btCollisionShape;
+#endif
 
 namespace Physics {
 
@@ -15,7 +28,7 @@ class Particle;
  * @brief Bullet Physics 整合類
  * 
  * 負責將 Bullet Physics 的碰撞檢測功能整合到 OGC 系統中。
- * Bullet 主要用於高效的碰撞檢測，而 OGC 負責接觸解析。
+ * 如果 Bullet Physics 不可用，則使用簡化的碰撞檢測實現。
  */
 class BulletIntegration {
 public:
@@ -23,7 +36,7 @@ public:
     ~BulletIntegration();
 
     /**
-     * @brief 初始化 Bullet Physics 世界
+     * @brief 初始化碰撞檢測系統
      */
     void initialize();
 
@@ -76,13 +89,16 @@ public:
      */
     void removeCollisionObject(btCollisionObject* collisionObject);
 
+#ifndef USE_SIMPLIFIED_COLLISION
     /**
-     * @brief 獲取碰撞世界
+     * @brief 獲取碰撞世界 (僅在使用 Bullet Physics 時可用)
      * @return Bullet碰撞世界指標
      */
     btCollisionWorld* getCollisionWorld() { return m_collisionWorld.get(); }
+#endif
 
 private:
+#ifndef USE_SIMPLIFIED_COLLISION
     std::unique_ptr<btDefaultCollisionConfiguration> m_collisionConfig;
     std::unique_ptr<btCollisionDispatcher> m_dispatcher;
     std::unique_ptr<btDbvtBroadphase> m_broadphase;
@@ -90,6 +106,7 @@ private:
     
     std::vector<std::unique_ptr<btCollisionShape>> m_collisionShapes;
     std::vector<std::unique_ptr<btCollisionObject>> m_collisionObjects;
+#endif
     
     /**
      * @brief 將 Bullet 接觸點轉換為 OGC 接觸

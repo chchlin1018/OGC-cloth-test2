@@ -1,0 +1,5 @@
+# 備份的外部依賴 CMakeLists.txt
+# 這個文件已被移除以避免 CMake 配置衝突
+
+# GLAD 現在直接在主 CMakeLists.txt 中處理
+# Bullet Physics 使用系統安裝版本或簡化實現

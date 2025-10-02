@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <chrono>
+#include <thread>
 #include <vector>
 
 #include "rendering/OpenGLRenderer.h"
